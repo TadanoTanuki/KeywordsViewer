@@ -4,6 +4,7 @@ import os
 import re
 import csv
 from io import BytesIO
+import pdfplumber
 import docx
 
 # ページのレイアウトをワイドに設定
@@ -19,8 +20,34 @@ def highlight_phrase(sentence, phrase, color):
     )
     return highlighted_sentence
 
+def split_regular(text, search_string):
+    # テキストを改行で分割して段落を取得
+    paragraphs = text.split("\n")
+    results = []
+
+    for para_index, para in enumerate(paragraphs):
+        # 正規表現を使ってセンテンスを分割
+        # 句点、感嘆符、疑問符でセンテンスを分ける
+        sentences = re.split(r'(?<=[.!?]) +', para.strip())
+        for sent_index, sent in enumerate(sentences):
+            if search_string.lower() in sent.lower():
+                results.append((para_index + 1, sent_index + 1, sent))
+    return results
 def read_txt(file):
     return file.read().decode("utf-8")
+
+def read_pdf(file):
+    text = ""
+    try:
+        with pdfplumber.open(file) as pdf:
+            for page in pdf.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text += page_text
+    except Exception as e:
+        st.error(f"PDF読み込み中にエラーが発生しました: {str(e)}")
+        return ""
+    return str(text)
 
 def read_docx(file):
     doc = docx.Document(file)
@@ -111,6 +138,9 @@ def save_as_csv(columns):
 
     return output.getvalue()
 
+def search_and_highlight(text, search_string, split_method):
+  if split_method == "regular":
+    return split_regular(text, search_string)
 def main():
     st.title("KeywordsViewer")
     with st.expander("使い方", expanded=False):
@@ -135,7 +165,7 @@ def main():
     if "key_counter" not in st.session_state:
         st.session_state.key_counter = 2  # 初期化カウンタ
     if "split_method" not in st.session_state:
-        st.session_state.split_method = "spaCy"
+        st.session_state.split_method = "regular"
     if "save_format" not in st.session_state:
         st.session_state.save_format = "Markdown"
 
@@ -149,7 +179,7 @@ def main():
         # アップロードしたファイルのリストから選択
         selected_file = st.selectbox("選択中のファイル:", [file.name for file in st.session_state.uploaded_files])
 
-        st.session_state.split_method = st.selectbox("分割方法を選択:", ["spaCy", "GiNZA"])
+        st.session_state.split_method = st.selectbox("分割方法を選択:", ["regular", "spaCy", "GiNZA"])
         st.session_state.save_format = st.selectbox("保存形式を選択:", ["Markdown", "CSV"])
 
         # 選択されたファイルをフィルタリング
@@ -169,7 +199,7 @@ def main():
 
         for i, col in enumerate(st.session_state.columns):
             with cols_input[i]:
-                search_string = st.text_input(f"検索ワード ({i+1}):", key=col["key"], value=col["value"])
+                search_string = st.text_input(f"検索ワード{i+1}", key=col["key"], value=col["value"])
                 st.session_state.columns[i]["value"] = search_string
 
                 if st.button("－", key=f"remove_{i}", help=f"削除 カラム{i+1}"):
@@ -194,7 +224,13 @@ def main():
                     st.session_state.key_counter += 1
                     st.experimental_rerun()
 
-
+        # 検索ボタンを表示
+        if st.button("検索"):
+            for i, col in enumerate(st.session_state.columns):
+                search_string = col["value"]
+                if search_string:
+                    results = search_and_highlight(text, search_string, st.session_state.split_method)
+                    st.session_state.columns[i]["results"] = results
 
         # 出力表示のカラムを生成
         cols_output = st.columns([1] * len(st.session_state.columns) + [0.1])
