@@ -4,7 +4,6 @@ import os
 import re
 import csv
 from io import BytesIO
-import pdfplumber
 import docx
 
 # ページのレイアウトをワイドに設定
@@ -35,19 +34,6 @@ def split_regular(text, search_string):
     return results
 def read_txt(file):
     return file.read().decode("utf-8")
-
-def read_pdf(file):
-    text = ""
-    try:
-        with pdfplumber.open(file) as pdf:
-            for page in pdf.pages:
-                page_text = page.extract_text()
-                if page_text:
-                    text += page_text
-    except Exception as e:
-        st.error(f"PDF読み込み中にエラーが発生しました: {str(e)}")
-        return ""
-    return str(text)
 
 def read_docx(file):
     doc = docx.Document(file)
