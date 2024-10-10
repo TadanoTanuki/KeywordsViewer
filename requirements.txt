@@ -2,3 +2,4 @@ streamlit
 spacy
 python-docx
 markdown2
+pdfplumber

@@ -6,6 +6,7 @@ import csv
 from io import BytesIO
 import docx
 import markdown2
+import pdfplumber
 
 # ページのレイアウトをワイドに設定
 st.set_page_config(layout="wide")
@@ -43,6 +44,19 @@ def read_docx(file):
 def read_md(file):
     md_content = file.read().decode("utf-8")
     return str(markdown2.markdown(md_content, extras=["strip"]))
+
+def read_pdf(file):
+    text = ""
+    try:
+        with pdfplumber.open(file) as pdf:
+            for page in pdf.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text += page_text
+    except Exception as e:
+        st.error(f"PDF読み込み中にエラーが発生しました: {str(e)}")
+        return ""
+    return str(text)
 
 def read_file(file):
     try:
