@@ -4,15 +4,7 @@ import os
 import re
 import csv
 from io import BytesIO
-import spacy
-from spacy.cli import download
-import pdfplumber
 import docx
-import markdown2
-
-# spaCy の英語モデルをロード
-download("en_core_web_sm")
-spacy_en = spacy.load("en_core_web_sm")
 
 # ページのレイアウトをワイドに設定
 st.set_page_config(layout="wide")
@@ -27,51 +19,12 @@ def highlight_phrase(sentence, phrase, color):
     )
     return highlighted_sentence
 
-def split_spacy(text, search_string):
-    paragraphs = text.split("\n")
-    results = []
-
-    for para_index, para in enumerate(paragraphs):
-        doc = spacy_en(para)
-        for sent_index, sent in enumerate(doc.sents):
-            if search_string.lower() in sent.text.lower():
-                results.append((para_index + 1, sent_index + 1, sent.text))
-    return results
-
-def split_ginza(text, search_string):
-    paragraphs = text.split("\n")
-    results = []
-
-    for para_index, para in enumerate(paragraphs):
-        doc = spacy_ja(para)
-        for sent_index, sent in enumerate(doc.sents):
-            if search_string in sent.text:  # 日本語のため大文字小文字の区別なし
-                results.append((para_index + 1, sent_index + 1, sent.text))
-    return results
-
 def read_txt(file):
     return file.read().decode("utf-8")
-
-def read_pdf(file):
-    text = ""
-    try:
-        with pdfplumber.open(file) as pdf:
-            for page in pdf.pages:
-                page_text = page.extract_text()
-                if page_text:
-                    text += page_text
-    except Exception as e:
-        st.error(f"PDF読み込み中にエラーが発生しました: {str(e)}")
-        return ""
-    return str(text)
 
 def read_docx(file):
     doc = docx.Document(file)
     return "\n".join([para.text for para in doc.paragraphs])
-
-def read_md(file):
-    md_content = file.read().decode("utf-8")
-    return str(markdown2.markdown(md_content, extras=["strip"]))
 
 def read_file(file):
     try:
@@ -158,12 +111,6 @@ def save_as_csv(columns):
 
     return output.getvalue()
 
-def search_and_highlight(text, search_string, split_method):
-    if split_method == "spaCy":
-        return split_spacy(text, search_string)
-    else:
-        return split_ginza(text, search_string)
-
 def main():
     st.title("KeywordsViewer")
     with st.expander("使い方", expanded=False):
@@ -247,13 +194,7 @@ def main():
                     st.session_state.key_counter += 1
                     st.experimental_rerun()
 
-        # 検索ボタンを表示
-        if st.button("検索"):
-            for i, col in enumerate(st.session_state.columns):
-                search_string = col["value"]
-                if search_string:
-                    results = search_and_highlight(text, search_string, st.session_state.split_method)
-                    st.session_state.columns[i]["results"] = results
+
 
         # 出力表示のカラムを生成
         cols_output = st.columns([1] * len(st.session_state.columns) + [0.1])
