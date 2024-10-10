@@ -5,6 +5,7 @@ import re
 import csv
 from io import BytesIO
 import docx
+import markdown2
 
 # ページのレイアウトをワイドに設定
 st.set_page_config(layout="wide")
@@ -38,6 +39,10 @@ def read_txt(file):
 def read_docx(file):
     doc = docx.Document(file)
     return "\n".join([para.text for para in doc.paragraphs])
+
+def read_md(file):
+    md_content = file.read().decode("utf-8")
+    return str(markdown2.markdown(md_content, extras=["strip"]))
 
 def read_file(file):
     try:
