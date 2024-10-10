@@ -1,5 +1,5 @@
 streamlit
-spacy
+spacy[transformers]
 pdfplumber
 python-docx
 markdown2

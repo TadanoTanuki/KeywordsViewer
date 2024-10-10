@@ -5,6 +5,7 @@ import re
 import csv
 from io import BytesIO
 import spacy
+from spacy.cli import download
 import pdfplumber
 import docx
 import markdown2
@@ -12,6 +13,7 @@ import pytesseract
 from pdf2image import convert_from_path
 
 # spaCy の英語モデルをロード
+download("en_core_web_sm")
 spacy_en = spacy.load("en_core_web_sm")
 
 # ページのレイアウトをワイドに設定
