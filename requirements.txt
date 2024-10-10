@@ -3,5 +3,4 @@ spacy[transformers]
 pdfplumber
 python-docx
 markdown2
-pytesseract
-pdf2image
+en-core-web-sm

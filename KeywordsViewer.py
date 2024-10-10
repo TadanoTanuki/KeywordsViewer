@@ -9,8 +9,6 @@ from spacy.cli import download
 import pdfplumber
 import docx
 import markdown2
-import pytesseract
-from pdf2image import convert_from_path
 
 # spaCy の英語モデルをロード
 download("en_core_web_sm")
@@ -62,12 +60,6 @@ def read_pdf(file):
                 page_text = page.extract_text()
                 if page_text:
                     text += page_text
-        if not text:
-            text += "PDFにテキスト情報がありません。OCRを使用して抽出します..."
-            images = convert_from_path(file.name)
-            for img in images:
-                ocr_text = pytesseract.image_to_string(img)
-                text += ocr_text
     except Exception as e:
         st.error(f"PDF読み込み中にエラーが発生しました: {str(e)}")
         return ""
