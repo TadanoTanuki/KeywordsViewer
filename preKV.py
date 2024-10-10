@@ -21,7 +21,9 @@ def highlight_phrase(sentence, phrase, color):
     )
     return highlighted_sentence
 
+
 def split_regular(text, search_string):
+  # TODO テキストの整形 ウィキペディアなど
     # テキストを改行で分割して段落を取得
     paragraphs = text.split("\n")
     results = []
@@ -29,21 +31,27 @@ def split_regular(text, search_string):
     for para_index, para in enumerate(paragraphs):
         # 正規表現を使ってセンテンスを分割
         # 句点、感嘆符、疑問符でセンテンスを分ける
+        # TODO より精密に
         sentences = re.split(r'(?<=[.!?]) +', para.strip())
         for sent_index, sent in enumerate(sentences):
             if search_string.lower() in sent.lower():
                 results.append((para_index + 1, sent_index + 1, sent))
     return results
+
+
 def read_txt(file):
     return file.read().decode("utf-8")
+
 
 def read_docx(file):
     doc = docx.Document(file)
     return "\n".join([para.text for para in doc.paragraphs])
 
+
 def read_md(file):
     md_content = file.read().decode("utf-8")
     return str(markdown2.markdown(md_content, extras=["strip"]))
+
 
 def read_pdf(file):
     text = ""
@@ -57,6 +65,7 @@ def read_pdf(file):
         st.error(f"PDF読み込み中にエラーが発生しました: {str(e)}")
         return ""
     return str(text)
+
 
 def read_file(file):
     try:
@@ -75,6 +84,7 @@ def read_file(file):
     except Exception as e:
         st.error(f"ファイル読み込み中にエラーが発生しました: {str(e)}")
         return None
+
 
 def display_save_buttons(uploaded_file, columns, file_name_input):
     file_name_input = st.text_input("保存ファイル名:", value=st.session_state.file_name_input)
@@ -104,6 +114,7 @@ def display_save_buttons(uploaded_file, columns, file_name_input):
                 mime="text/csv"
             )
 
+
 def save_as_md_table(columns):
     md_output = "| No. | " + " | ".join([col["value"] for col in columns]) + " |\n"
     md_output += "|-----|" + "|".join(["-" * len(col["value"]) for col in columns]) + "|\n"
@@ -121,6 +132,7 @@ def save_as_md_table(columns):
         md_output += "| " + " | ".join(row) + " |\n"
 
     return md_output.encode("utf-8")
+
 
 def save_as_csv(columns):
     output = BytesIO()
@@ -143,9 +155,12 @@ def save_as_csv(columns):
 
     return output.getvalue()
 
+
 def search_and_highlight(text, search_string, split_method):
   if split_method == "regular":
     return split_regular(text, search_string)
+
+
 def main():
     st.title("KeywordsViewer")
     with st.expander("使い方", expanded=False):
@@ -209,7 +224,7 @@ def main():
 
                 if st.button("－", key=f"remove_{i}", help=f"削除 カラム{i+1}"):
                     st.session_state.columns.pop(i)
-                    st.experimental_rerun()
+                    break  # ループを抜けて再描画を促す
 
         with cols_input[-1]:
             st.write("")
@@ -227,7 +242,7 @@ def main():
                         {"key": new_key, "color": new_color, "value": "", "results": []}
                     )
                     st.session_state.key_counter += 1
-                    st.experimental_rerun()
+
 
         # 検索ボタンを表示
         if st.button("検索"):

@@ -27,6 +27,8 @@ def highlight_phrase(sentence, phrase, color):
     )
     return highlighted_sentence
 
+
+
 def split_spacy(text, search_string):
     paragraphs = text.split("\n")
     results = []
