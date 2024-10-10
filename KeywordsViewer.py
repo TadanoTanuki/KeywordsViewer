@@ -4,8 +4,6 @@ import os
 import re
 import csv
 from io import BytesIO
-import nltk
-from nltk.tokenize import sent_tokenize
 import spacy
 import pdfplumber
 import docx
@@ -13,27 +11,12 @@ import markdown2
 import pytesseract
 from pdf2image import convert_from_path
 
-# NLTKのデータをダウンロード
-nltk.download("punkt")
-
 # spaCy の英語モデルをロード
 spacy_en = spacy.load("en_core_web_sm")
-# GiNZA の日本語モデルをロード
-spacy_ja = spacy.load('ja_ginza')
 
 # ページのレイアウトをワイドに設定
 st.set_page_config(layout="wide")
 
-def split_nltk(text, search_string):
-    paragraphs = text.split("\n")
-    results = []
-
-    for para_index, para in enumerate(paragraphs):
-        sentences = sent_tokenize(para)
-        for sent_index, sent in enumerate(sentences):
-            if search_string.lower() in sent.lower():
-                results.append((para_index + 1, sent_index + 1, sent))
-    return results
 
 def highlight_phrase(sentence, phrase, color):
     highlighted_sentence = re.sub(
@@ -182,9 +165,7 @@ def save_as_csv(columns):
     return output.getvalue()
 
 def search_and_highlight(text, search_string, split_method):
-    if split_method == "NLTK":
-        return split_nltk(text, search_string)
-    elif split_method == "spaCy":
+    if split_method == "spaCy":
         return split_spacy(text, search_string)
     else:
         return split_ginza(text, search_string)
@@ -213,7 +194,7 @@ def main():
     if "key_counter" not in st.session_state:
         st.session_state.key_counter = 2  # 初期化カウンタ
     if "split_method" not in st.session_state:
-        st.session_state.split_method = "NLTK"
+        st.session_state.split_method = "spaCy"
     if "save_format" not in st.session_state:
         st.session_state.save_format = "Markdown"
 
@@ -227,7 +208,7 @@ def main():
         # アップロードしたファイルのリストから選択
         selected_file = st.selectbox("選択中のファイル:", [file.name for file in st.session_state.uploaded_files])
 
-        st.session_state.split_method = st.selectbox("分割方法を選択:", ["spaCy", "GiNZA", "NLTK"])
+        st.session_state.split_method = st.selectbox("分割方法を選択:", ["spaCy", "GiNZA"])
         st.session_state.save_format = st.selectbox("保存形式を選択:", ["Markdown", "CSV"])
 
         # 選択されたファイルをフィルタリング
